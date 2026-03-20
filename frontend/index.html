@@ -66,6 +66,18 @@
     }
     input[type="text"]:focus, textarea:focus { border-color: var(--accent); }
     textarea { min-height: 80px; margin-top: 0.5rem; }
+    .field-meta {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 0.4rem;
+    }
+    .char-count {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+    .char-count.limit {
+      color: var(--accent);
+    }
 
     .row { display: flex; gap: 0.75rem; margin-top: 0.75rem; align-items: center; }
     .pin-label { display: flex; align-items: center; gap: 0.4rem; font-size: 0.875rem; color: var(--text-muted); cursor: pointer; user-select: none; }
@@ -208,7 +220,15 @@
   <div class="create-card">
     <h2>New Note</h2>
     <input type="text" id="new-title" placeholder="Title" maxlength="200" />
-    <textarea id="new-content" placeholder="Content (optional)"></textarea>
+    <textarea
+      id="new-content"
+      placeholder="Content (optional)"
+      maxlength="1000"
+      oninput="updateNewContentCount()"
+    ></textarea>
+    <div class="field-meta">
+      <span class="char-count" id="new-content-count">0 / 1000 chars</span>
+    </div>
     <div class="row">
       <label class="pin-label">
         <input type="checkbox" id="new-pinned" />
@@ -233,6 +253,7 @@
 
 <script>
   const API = '/api';
+  const NOTE_CONTENT_MAX_LENGTH = 1000;
 
   // ── Utilities ──────────────────────────────────────────────────────────────
 
@@ -249,6 +270,27 @@
     el.className = 'toast show' + (error ? ' error' : '');
     clearTimeout(toastTimer);
     toastTimer = setTimeout(() => el.classList.remove('show'), 2500);
+  }
+
+  function formatContentCount(value) {
+    return `${value.length} / ${NOTE_CONTENT_MAX_LENGTH} chars`;
+  }
+
+  function setContentCount(countEl, value) {
+    if (!countEl) return;
+    countEl.textContent = formatContentCount(value);
+    countEl.classList.toggle('limit', value.length === NOTE_CONTENT_MAX_LENGTH);
+  }
+
+  function updateNewContentCount() {
+    const textarea = document.getElementById('new-content');
+    const countEl = document.getElementById('new-content-count');
+    setContentCount(countEl, textarea.value);
+  }
+
+  function updateEditContentCount(textarea) {
+    const countEl = textarea.closest('.edit-fields').querySelector('.edit-content-count');
+    setContentCount(countEl, textarea.value);
   }
 
   // ── API calls ──────────────────────────────────────────────────────────────
@@ -279,7 +321,14 @@
 
         <div class="edit-fields">
           <input type="text" class="edit-title" value="${escAttr(note.title)}" maxlength="200" />
-          <textarea class="edit-content">${escHtml(note.content)}</textarea>
+          <textarea
+            class="edit-content"
+            maxlength="${NOTE_CONTENT_MAX_LENGTH}"
+            oninput="updateEditContentCount(this)"
+          >${escHtml(note.content)}</textarea>
+          <div class="field-meta">
+            <span class="char-count edit-content-count">${formatContentCount(note.content)}</span>
+          </div>
           <div class="edit-actions">
             <button class="btn-save" onclick="saveEdit('${note.id}')">Save</button>
             <button class="btn-cancel" onclick="cancelEdit('${note.id}')">Cancel</button>
@@ -347,6 +396,7 @@
       await apiFetch('/notes/', { method: 'POST', body: JSON.stringify({ title, content, pinned }) });
       document.getElementById('new-title').value = '';
       document.getElementById('new-content').value = '';
+      updateNewContentCount();
       document.getElementById('new-pinned').checked = false;
       showToast('Note created');
       await loadNotes();
@@ -420,6 +470,7 @@
 
   // ── Init ───────────────────────────────────────────────────────────────────
   loadVersion();
+  updateNewContentCount();
   loadNotes();
 </script>
 </body>

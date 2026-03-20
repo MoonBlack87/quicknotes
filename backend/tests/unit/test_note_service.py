@@ -1,5 +1,6 @@
 import pytest
 from fastapi import HTTPException
+from pydantic import ValidationError
 
 from app.services.note_service import NoteService
 from app.schemas.note import NoteCreate, NoteUpdate
@@ -18,6 +19,11 @@ def test_create_note_empty_title_raises(session):
     service = NoteService(session)
     with pytest.raises(Exception):
         service.create(NoteCreate(title="   ", content="oops"))
+
+
+def test_create_note_content_too_long_raises_validation_error():
+    with pytest.raises(ValidationError):
+        NoteCreate(title="Too Long", content="a" * 1001)
 
 
 def test_list_notes_pinned_first(session):
@@ -62,6 +68,11 @@ def test_update_note_pin(session):
     assert note.pinned is False
     updated = service.update(note.id, NoteUpdate(pinned=True))
     assert updated.pinned is True
+
+
+def test_update_note_content_too_long_raises_validation_error():
+    with pytest.raises(ValidationError):
+        NoteUpdate(content="a" * 1001)
 
 
 def test_update_note_not_found(session):

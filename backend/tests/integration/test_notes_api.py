@@ -11,7 +11,9 @@ def test_list_notes_empty(client):
 
 
 def test_create_note(client):
-    response = client.post("/api/notes/", json={"title": "My First Note", "content": "Hello!"})
+    response = client.post(
+        "/api/notes/", json={"title": "My First Note", "content": "Hello!"}
+    )
     assert response.status_code == 201
     data = response.json()
     assert data["title"] == "My First Note"
@@ -28,6 +30,14 @@ def test_create_note_empty_title_fails(client):
 
 def test_create_note_missing_title_fails(client):
     response = client.post("/api/notes/", json={"content": "No title"})
+    assert response.status_code == 422
+
+
+def test_create_note_content_too_long_fails(client):
+    response = client.post(
+        "/api/notes/",
+        json={"title": "Too Long", "content": "a" * 1001},
+    )
     assert response.status_code == 422
 
 
@@ -54,6 +64,15 @@ def test_update_note(client):
     update_resp = client.patch(f"/api/notes/{note_id}", json={"title": "Updated"})
     assert update_resp.status_code == 200
     assert update_resp.json()["title"] == "Updated"
+
+
+def test_update_note_content_too_long_fails(client):
+    note_id = client.post("/api/notes/", json={"title": "Original"}).json()["id"]
+    response = client.patch(
+        f"/api/notes/{note_id}",
+        json={"content": "a" * 1001},
+    )
+    assert response.status_code == 422
 
 
 def test_pin_note(client):
