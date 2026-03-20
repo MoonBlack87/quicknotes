@@ -33,8 +33,19 @@ def health() -> dict:
     return {"status": "ok", "version": settings.APP_VERSION}
 
 
-# ── Serve frontend static files (production) ─────────────────────────────────
+# ── Serve frontend static files ───────────────────────────────────────────────
 
+_project_root = Path(__file__).resolve().parents[2]
+_frontend_dir = _project_root / "frontend"
 _static_dir = Path(__file__).parent / "static"
-if _static_dir.exists():
-    app.mount("/", StaticFiles(directory=_static_dir, html=True), name="static")
+
+_served_frontend_dir = None
+if (_frontend_dir / "index.html").exists():
+    _served_frontend_dir = _frontend_dir
+elif (_static_dir / "index.html").exists():
+    _served_frontend_dir = _static_dir
+
+if _served_frontend_dir is not None:
+    app.mount(
+        "/", StaticFiles(directory=_served_frontend_dir, html=True), name="static"
+    )

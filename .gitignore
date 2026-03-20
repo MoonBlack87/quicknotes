@@ -29,3 +29,4 @@ build/
 
 # Frontend build output (copied to backend/app/static — generated, not committed)
 backend/app/static/
+.ruff_cache/

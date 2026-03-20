@@ -23,6 +23,7 @@ def session_fixture():
 @pytest.fixture(name="client")
 def client_fixture(session: Session):
     """Test client with DB dependency overridden to use in-memory DB."""
+
     def override_get_session():
         yield session
 

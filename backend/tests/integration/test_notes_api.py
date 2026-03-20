@@ -4,6 +4,14 @@ def test_health(client):
     assert response.json()["status"] == "ok"
 
 
+def test_frontend_serves_current_source_index(client):
+    response = client.get("/")
+    assert response.status_code == 200
+    assert "text/html" in response.headers["content-type"]
+    assert 'data-theme-option="light"' in response.text
+    assert "quicknotes-theme" in response.text
+
+
 def test_list_notes_empty(client):
     response = client.get("/api/notes/")
     assert response.status_code == 200
